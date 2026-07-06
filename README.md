@@ -72,7 +72,7 @@ Adaptive mode stores compact metadata and checksum information in each strand:
 
 The compact binary header is 20 bytes, encoded as 80 DNA bases with the Fixed 2-bit codec. With the 16-base preamble, the current per-strand non-payload overhead is 96 DNA bases.
 
-Adaptive mode is designed to improve DNA-friendliness, not to beat Fixed 2-bit raw density.
+Adaptive mode is designed to improve DNA-friendliness, not to beat Fixed 2-bit raw density. The default adaptive candidate search uses 32 seed trials, each combined with 6 mapping IDs and 4 start bases.
 
 ## DNA constraints analyzed
 
@@ -186,6 +186,10 @@ Or with the local virtual environment:
 ```sh
 ./.venv/bin/python -m pytest tests
 ```
+
+## Continuous integration
+
+GitHub Actions runs the test suite automatically on pushes and pull requests to `main` using `.github/workflows/tests.yml`.
 
 ## Usage notes
 

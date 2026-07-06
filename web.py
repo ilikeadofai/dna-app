@@ -23,15 +23,16 @@ except ImportError:  # pragma: no cover - Streamlit can still show tables withou
 
 from dna_codec import (
     DEFAULT_CHUNK_SIZE,
+    DEFAULT_SEED_TRIALS,
     AdaptiveCodecError,
     ChecksumMismatchError,
-    adaptive_decode,
+    adaptive_decode_chunks,
     adaptive_encode_chunks,
     analyze_sequence,
     bytes_to_fixed_dna,
     fixed_dna_to_bytes,
     normalize_dna,
-    reassemble_chunks,
+    parse_adaptive_strand,
     rotating_decode,
     rotating_encode,
 )
@@ -254,21 +255,15 @@ def decode_selected_codec(
     if not strands:
         raise ValueError("DNA 입력이 비어 있습니다.")
 
-    decoded = [adaptive_decode(strand) for strand in strands]
-    if len(decoded) == 1:
-        data = decoded[0].data
-    else:
-        data = reassemble_chunks(
-            [(item.header.chunk_index, item.data) for item in decoded],
-            total_chunks=decoded[0].header.total_chunks,
-        )
+    headers = [parse_adaptive_strand(strand)[0] for strand in strands]
+    data = adaptive_decode_chunks(strands)
 
     return data, {
         "codec": codec,
         "checksum": "CRC32 verified",
-        "chunks": len(decoded),
-        "total_chunks": decoded[0].header.total_chunks,
-        "compressed": any(item.header.compressed for item in decoded),
+        "chunks": len(strands),
+        "total_chunks": headers[0].total_chunks,
+        "compressed": any(header.compressed for header in headers),
     }
 
 
@@ -396,7 +391,7 @@ def render_encode_tab() -> None:
     rotating_start_base = "A"
     rotating_mapping_id = 0
     adaptive_chunk_size = DEFAULT_CHUNK_SIZE
-    adaptive_seed_trials = 4
+    adaptive_seed_trials = DEFAULT_SEED_TRIALS
     adaptive_compressed = False
 
     if codec == CODEC_ROTATING:
@@ -414,7 +409,7 @@ def render_encode_tab() -> None:
             "Chunk size", min_value=1, max_value=4096, value=DEFAULT_CHUNK_SIZE, step=16
         )
         adaptive_seed_trials = cols[1].number_input(
-            "Seed trials", min_value=1, max_value=64, value=4, step=1
+            "Seed trials", min_value=1, max_value=64, value=DEFAULT_SEED_TRIALS, step=1
         )
         adaptive_compressed = cols[2].checkbox("Compression", value=False)
 
